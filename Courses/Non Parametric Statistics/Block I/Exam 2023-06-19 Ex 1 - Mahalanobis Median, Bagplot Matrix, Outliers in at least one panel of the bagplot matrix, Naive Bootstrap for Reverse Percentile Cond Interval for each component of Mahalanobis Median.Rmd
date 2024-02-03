@@ -1,0 +1,196 @@
+---
+title: "Nonparametric Statistics"
+author: "Noé Debrois and ID number"
+date: "2024-01-12"
+output:
+  pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE)
+knitr::opts_chunk$set(warning = FALSE)
+knitr::opts_chunk$set(message = FALSE)
+```
+
+```{r,echo=FALSE,results='hide',warning=FALSE,message=FALSE}
+#Library imports 
+library(aplpack)
+library(boot)
+library(broom)
+library(bslib)
+library(colorspace)
+library(conformalInference)
+library(conformalInference.fd)
+library(conformalInference.multi)
+library(corrplot)
+library(cowplot)
+library(datasets)
+library(dbscan)
+library(DepthProc)
+library(desc)
+library(DescTools)
+library(exactRankTests)
+library(fastmap)
+library(fda)
+library(fds)
+library(gam)
+library(gdtools)
+library(ggnewscale)
+library(ggplot2)
+library(ggsignif)
+library(ggtext)
+library(graphics)
+library(grDevices)
+library(grid)
+library(gridExtra)
+library(lme4)
+library(lmPerm)
+library(locfit)
+library(Matrix)
+library(MatrixModels)
+library(mgcv)
+library(nlme)
+library(np)
+library(npreg)
+library(pbapply)
+library(permute)
+library(polynom)
+library(pyinit)
+library(quantreg)
+library(rainbow)
+library(Rcpp)
+library(resample)
+library(roahd)
+library(RobStatTM)
+library(robustbase)
+library(rpart)
+library(rrcov)
+library(scales)
+library(sm)
+library(splines)
+library(stats)
+library(survival)
+library(survminer)
+
+library(base64enc)
+library(bit)
+library(brio)
+library(cachem)
+library(commonmark)
+library(cpp11)
+library(doParallel)
+library(parallel)
+library(parallelly)
+
+```
+
+
+# Exercise 1
+
+# Simon Le Vanten is a French winemaker whose aim is to produce the greatest wine in all of France. Knowing that he must rely on the most sophisticated analytical techniques to achieve his goal he collects N = 178 wine samples, measuring three chemical properties of his wines, namely levels of alcohol (pure content in percentage), proline (milligrams per deciliter), and calcium (milligrams per deciliter). The resulting samples are contained in the df_1.Rds file. To help Simon achieve his goal he asks you to:
+
+## Question 1.1
+
+# 1. Provide the sample Mahalanobis median of the wine samples
+
+**Synthetic description of assumptions, methods, and algorithms **    
+
+**Results and brief discussion**    
+
+```{r,echo=FALSE}
+df_1 <- readRDS("/Users/noedebrois/Desktop/Politecnico/Non Parametric Statistics/LECTURES/PREVIOUS EXAMS-20231223/Data/2023-06-19/df_1.Rds")
+
+mahalanobis_median <- depthMedian(df_1, depth_params = list(method='Mahalanobis'))
+mahalanobis_median
+```
+
+## Question 1.2
+
+# 2. Plot a bagplot matrix of the three collected variables, and determine a vector of row indexes identifying the wine samples that are outliers at least in one panel of the bagplot matrix.
+
+**Synthetic description of assumptions, methods, and algorithms **    
+abc     
+
+**Results and brief discussion**    
+123
+```{r,echo=FALSE}
+bagplot_matrix <- aplpack::bagplot.pairs(df_1)
+```
+
+```{r,echo=FALSE}
+df_12 = df_1[1:2]
+df_23 = df_1[2:3]
+df_13 = df_1[c(1, 3)]
+
+bagplot_1 = aplpack::bagplot(df_12,show.whiskers = F,main="Bagplot")
+bagplot_2 = aplpack::bagplot(df_23,show.whiskers = F,main="Bagplot")
+bagplot_3 = aplpack::bagplot(df_13,show.whiskers = F,main="Bagplot")
+
+outlying_obs_1 <- bagplot_1$pxy.outlier
+outlying_obs_2 <- bagplot_2$pxy.outlier
+outlying_obs_3 <- bagplot_3$pxy.outlier
+
+ind_outlying_obs_1 <- which(apply(df_12,1,function(x) all(x %in% outlying_obs_1))) 
+ind_outlying_obs_1
+
+ind_outlying_obs_2 <- which(apply(df_23,1,function(x) all(x %in% outlying_obs_2))) 
+ind_outlying_obs_2
+
+ind_outlying_obs_3 <- which(apply(df_13,1,function(x) all(x %in% outlying_obs_3))) 
+ind_outlying_obs_3
+
+outliers = unique(c(ind_outlying_obs_1, ind_outlying_obs_2, ind_outlying_obs_3))
+outliers = sort(outliers)
+outliers
+```
+
+
+## Question 1.3
+
+# 3. Employing a naive bootstrap approach, provide a reverse percentile confidence interval with $\alpha = 0.01$ for each component of the Mahalanobis Median of the wine samples.
+
+**Synthetic description of assumptions, methods, and algorithms **    
+abc     
+
+**Results and brief discussion**    
+123
+```{r,echo=FALSE}
+N <- nrow(df_1)
+p <- ncol(df_1)
+B <- 1000
+
+maha_median_boot = matrix(nrow = B,ncol = p)
+
+set.seed(2022)
+for(b in 1:B) {
+  boot_id <- sample(x = 1:N,size = N,replace = TRUE)
+  df_boot <- df_1[boot_id,]
+  maha_median_boot[b,] = depthMedian(df_boot, depth_params = list(method='Mahalanobis'))
+}
+
+alpha <- 0.01
+
+right.quantile.maha <- apply(maha_median_boot,2,quantile, probs=1 - alpha/2)
+left.quantile.maha <- apply(maha_median_boot,2,quantile, probs=alpha/2)
+
+CI.maha <- matrix(c(mahalanobis_median - (right.quantile.maha - mahalanobis_median),
+                    mahalanobis_median,
+                    mahalanobis_median - (left.quantile.maha- mahalanobis_median)),
+                  byrow = TRUE,nrow = 3,ncol = p)
+
+rownames(CI.maha) = c('lwr','pointwise','upr') 
+colnames(CI.maha)=names(mahalanobis_median)
+
+CI.maha
+```
+
+
+
+
+
+
+
+
+
+
+

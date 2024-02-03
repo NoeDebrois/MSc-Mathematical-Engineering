@@ -1,0 +1,209 @@
+---
+title: "Nonparametric Statistics"
+author: "Simon, Trottier and ID number"
+date: "2024-01-12"
+output:
+  pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+knitr::opts_chunk$set(warning = FALSE)
+knitr::opts_chunk$set(message = FALSE)
+```
+
+```{r,echo=FALSE,results='hide',warning=FALSE,message=FALSE}
+#Library imports 
+library(aplpack)
+library(boot)
+library(broom)
+library(bslib)
+library(colorspace)
+library(conformalInference)
+library(conformalInference.fd)
+library(conformalInference.multi)
+library(corrplot)
+library(cowplot)
+library(datasets)
+library(dbscan)
+library(DepthProc)
+library(desc)
+library(DescTools)
+library(exactRankTests)
+library(fastmap)
+library(fda)
+library(fds)
+library(gam)
+library(gdtools)
+library(ggnewscale)
+library(ggplot2)
+library(ggsignif)
+library(ggtext)
+library(graphics)
+library(grDevices)
+library(grid)
+library(gridExtra)
+library(lme4)
+library(lmPerm)
+library(locfit)
+library(Matrix)
+library(MatrixModels)
+library(mgcv)
+library(nlme)
+library(np)
+library(npreg)
+library(pbapply)
+library(permute)
+library(polynom)
+library(pyinit)
+library(quantreg)
+library(rainbow)
+library(Rcpp)
+library(resample)
+library(roahd)
+library(RobStatTM)
+library(robustbase)
+library(rpart)
+library(rrcov)
+library(scales)
+library(sm)
+library(splines)
+library(stats)
+library(survival)
+library(survminer)
+
+library(base64enc)
+library(bit)
+library(brio)
+library(cachem)
+library(commonmark)
+library(cpp11)
+library(doParallel)
+library(parallel)
+library(parallelly)
+
+```
+
+
+# Exercise 3
+
+# The research proposal of Professor Franziska Iünz is confidential, yet she is willing to share some classified information with you should you help her provide some preliminary evidence. Professor Iünz aims at using functional data analysis (FDA) to uncover novel insights in healthcare analysis. To do so, she has collected 100 samples of ECG traces: 50 pertaining to healthy subjects, while the remaining ones are related to patients suffering from Left-Bundle-Branch-Block (LBBB), a cardiac pathology of interest. The data are contained in the df_3.Rds file. The type variable records the subject health status, while the remaining ones, denoted with V1,. . ., V1024, contains the values of the discretized signal over an evenly spaced grid of 1024 time points.
+
+## Question 1.1
+
+# 1. By suitably defining a functional data object, plot the resulting curves for the N = 100 subjects. Making no distinction in the subjects type, compute the sample median curve using the modified band depth and superimpose it to the previous plot.
+
+**Synthetic description of assumptions, methods, and algorithms **    
+
+
+**Results and brief discussion**    
+
+```{r,echo=FALSE}
+df_3 <- readRDS("/Users/noedebrois/Desktop/Politecnico/Non Parametric Statistics/LECTURES/PREVIOUS EXAMS-20231223/Data/2023-02-10/df_3.Rds")
+```
+
+
+```{r,echo=FALSE}
+df_3_no_type <- df_3[,-1]
+N = nrow(df_3)
+
+## PLOT THE RESULTING FCTIONAL DATA  :
+# The way roahd package represents functional objects is by providing an evenly
+# spaced grid I = [t0, t1, ... , tP−1] (tj − tj−1 = h > 0, ∀j = 1, ... , P − 1).
+grid <- 1:ncol(df_3_no_type)
+f_data <- fData(grid, df_3_no_type) # functional data (using roahd package)
+plot(f_data) # it works !
+# class(f_data) # print the class : it's functional !
+
+## COMPUTE THE MEDIAN SPECTRUM USING MBD :
+median_curve <- median_fData(fData = f_data, type = "MBD") # still an fData object
+
+## SUPERPOSITION :
+lines(grid,median_curve$values)
+```
+```{r}
+class(f_data) # print the class : it's functional !
+```
+
+## Question 1.2
+
+# 2. Using again the modified band depth, compute the sample median curves for the healthy and LBBB subgroups of subjects and provide a relevant plot of them.
+
+**Synthetic description of assumptions, methods, and algorithms **    
+abc     
+
+**Results and brief discussion**    
+123
+```{r,echo=FALSE}
+df_3_split <- split(x = df_3_no_type, f = df_3$type)
+
+healthy_fd=fData(grid,df_3_split$healthy)
+LBBB_fd=fData(grid,df_3_split$LBBB)
+
+MBD_healthy <- median_fData(healthy_fd,type='MBD')
+MBD_LBBB <- median_fData(LBBB_fd,type='MBD')
+
+df_4_plot <- append_fData(fD1 = f_data,fD2 = append_fData(MBD_healthy,MBD_LBBB))
+plot(df_4_plot,col=c(rep("black",100),"green","red"))
+```
+
+
+## Question 1.3
+
+# 3. Test the equality of the theoretical median curves for the healthy and LBBB subgroups of subjects by performing a global two-sample permutation test using as a test statistics the L1 norm between the two sample MBD medians. Present the empirical cumulative distribution function of the permutational test statistic as well as the p-value for the test.
+
+**Synthetic description of assumptions, methods, and algorithms **    
+abc     
+
+**Results and brief discussion**    
+123
+
+```{r,echo=FALSE}
+median_diff <- MBD_healthy$values-MBD_LBBB$values
+T0=(sum(abs(median_diff)))
+
+N <- nrow(df_3)
+B <- 1000
+T0_perm <- numeric(B)
+
+set.seed(2022)
+pb=progress::progress_bar$new(total=B, format = " Processing [:bar] :percent eta: :eta") 
+
+for(perm in 1:B){
+  permutazione <- sample(N)
+  df_perm=f_data[permutazione,]
+  perm_healthy = df_perm[1:50,]
+  perm_LBBB = df_perm[(50+1):100,]
+  median_diff_perm = median_fData(perm_healthy, type = 'MBD')$values -
+    median_fData(perm_LBBB, type ='MBD')$values
+  T0_perm[perm]=sum(abs(median_diff_perm))
+  pb$tick()
+}
+```
+```{r}
+# Visualize permutational distribution of T
+hist(T0_perm, xlim=range(c(T0_perm, T0)), breaks=30)
+abline(v=T0, col=3, lwd=2)
+```
+
+```{r}
+# Plot empirical cumulative distribution function (ECDF)
+plot(ecdf(T0_perm))
+abline(v=T0, col=3, lwd=2)
+```
+
+
+```{r}
+# Calculate p-value
+p_val <- sum(T0_perm >= T0) / B
+print("The P-Value for this test is :")
+p_val
+# The two medians are statistically different !
+```
+
+
+
+
+
+
+

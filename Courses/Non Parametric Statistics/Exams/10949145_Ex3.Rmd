@@ -1,0 +1,167 @@
+---
+title: "Nonparametric Statistics"
+author: "Noé Debrois, Person Code 10949145, ID 242751"
+date: "2024-01-12"
+output:
+  pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE)
+knitr::opts_chunk$set(warning = FALSE)
+knitr::opts_chunk$set(message = FALSE)
+```
+
+```{r,echo=FALSE,results='hide',warning=FALSE,message=FALSE}
+#Library imports 
+library(aplpack)
+library(boot)
+library(broom)
+library(bslib)
+library(colorspace)
+library(conformalInference)
+library(conformalInference.fd)
+library(conformalInference.multi)
+library(corrplot)
+library(cowplot)
+library(datasets)
+library(dbscan)
+library(DepthProc)
+library(desc)
+library(DescTools)
+library(exactRankTests)
+library(fastmap)
+library(fda)
+library(fds)
+library(gam)
+library(gdtools)
+library(ggnewscale)
+library(ggplot2)
+library(ggsignif)
+library(ggtext)
+library(graphics)
+library(grDevices)
+library(grid)
+library(gridExtra)
+library(lme4)
+library(lmPerm)
+library(locfit)
+library(Matrix)
+library(MatrixModels)
+library(mgcv)
+library(nlme)
+library(np)
+library(npreg)
+library(pbapply)
+library(permute)
+library(polynom)
+library(pyinit)
+library(quantreg)
+library(rainbow)
+library(Rcpp)
+library(resample)
+library(roahd)
+library(RobStatTM)
+library(robustbase)
+library(rpart)
+library(rrcov)
+library(scales)
+library(sm)
+library(splines)
+library(stats)
+library(survival)
+library(survminer)
+
+library(base64enc)
+library(bit)
+library(brio)
+library(cachem)
+library(commonmark)
+library(cpp11)
+library(doParallel)
+library(parallel)
+library(parallelly)
+
+```
+
+
+# Exercise 3
+
+## Question 3.1
+**Synthetic description of assumptions, methods, and algorithms **    
+We will use functional data (using roahd package). Then if we defined well our functional data, we can just use plot(f_data). After having plotted our functional boxplot, we can have access to the magnitude outliers using $ID_outliers argument.
+
+**Results and brief discussion**    
+
+```{r,echo=FALSE}
+ex3 <- readRDS("/Users/noedebrois/Desktop/Politecnico/Non Parametric Statistics/Exam/NPS Exam 12_01_2024/NPS_January24/ex3.rds")
+```
+
+```{r}
+grid <- ex3$time
+df3 = ex3$df3
+df3 = df3[,3:102]
+f_data <- fData(grid, df3)
+```
+
+```{r, fig.width=4}
+plot(f_data)
+```
+```{r, fig.width=4}
+fbplot <- fbplot(f_data, main="Magnitude outliers")
+```
+```{r}
+outliers = c(fbplot$ID_outliers) 
+outliers # yes there is one !
+```
+```{r}
+ex3$df3[outliers,] # The magnitude outlier is Luxembourg !
+```
+
+## Question 3.2
+**Synthetic description of assumptions, methods, and algorithms **    
+We use here the trim mean which is a robustified version of the classical mean.
+
+**Results and brief discussion**    
+123
+```{r,echo=FALSE}
+df_clean_group = split(x = ex3$df3, f = ex3$df3$IncomeGroup)
+first_group = df_clean_group$`High income`[,-1]
+first_group = first_group[,-1]
+B = nrow(first_group)
+mean_trim <- numeric(B)
+for (b in 1:B) {
+  a = mean(first_group[,b], trim = .1)
+  mean_trim = c(mean_trim, a)
+}
+mean_trim
+```
+
+
+## Question 3.3
+**Synthetic description of assumptions, methods, and algorithms **    
+abc     
+
+**Results and brief discussion**    
+123
+```{r,echo=FALSE}
+
+```
+
+## Question 3.4
+**Synthetic description of assumptions, methods, and algorithms **    
+Assumptions : X11,...,X1n~p1 X21,...,X2m~p2
+H0 : p1=p2 , H1 : p1!=p2 
+T0 = |X_trim_mean1-X_trim_mean2|
+
+**Results and brief discussion**    
+123
+```{r,echo=FALSE}
+
+```
+
+```{r,echo=FALSE}
+
+```
+
+

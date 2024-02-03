@@ -1,0 +1,184 @@
+---
+title: "Nonparametric Statistics"
+author: "Noé Debrois and ID number"
+date: "2024-01-12"
+output:
+  pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE)
+knitr::opts_chunk$set(warning = FALSE)
+knitr::opts_chunk$set(message = FALSE)
+```
+
+```{r,echo=FALSE,results='hide',warning=FALSE,message=FALSE}
+#Library imports 
+library(aplpack)
+library(boot)
+library(broom)
+library(bslib)
+library(colorspace)
+library(conformalInference)
+library(conformalInference.fd)
+library(conformalInference.multi)
+library(corrplot)
+library(cowplot)
+library(datasets)
+library(dbscan)
+library(DepthProc)
+library(desc)
+library(DescTools)
+library(exactRankTests)
+library(fastmap)
+library(fda)
+library(fds)
+library(gam)
+library(gdtools)
+library(ggnewscale)
+library(ggplot2)
+library(ggsignif)
+library(ggtext)
+library(graphics)
+library(grDevices)
+library(grid)
+library(gridExtra)
+library(lme4)
+library(lmPerm)
+library(locfit)
+library(Matrix)
+library(MatrixModels)
+library(mgcv)
+library(nlme)
+library(np)
+library(npreg)
+library(pbapply)
+library(permute)
+library(polynom)
+library(pyinit)
+library(quantreg)
+library(rainbow)
+library(Rcpp)
+library(resample)
+library(roahd)
+library(RobStatTM)
+library(robustbase)
+library(rpart)
+library(rrcov)
+library(scales)
+library(sm)
+library(splines)
+library(stats)
+library(survival)
+library(survminer)
+
+library(base64enc)
+library(bit)
+library(brio)
+library(cachem)
+library(commonmark)
+library(cpp11)
+library(doParallel)
+library(parallel)
+library(parallelly)
+
+```
+
+
+# Exercise 3
+
+# Simon Le Vanten knows that a good balance of sweetness and acidity is essential for the right pH to be achieved and ultimately make good wines. Since to improve yourself you need to learn from the best, he collects N = 107 samples of two Italian wine types (Barolo and Barbera) for which he measures glycerol, sugar free extract, tartaric acid and malic acid levels (all expressed in grams per liter) along with the resulting pH. The dataset containing this information is stored in the df_3.rds file.
+
+## Question 1.1
+
+# 1. Focusing on the Barolo wine samples, compute the Minimum Covariance Determinant estimator for the glycerol, sugar_free_extract, tartaric_acid and malic_acid variables. Consider 1000 subsets for initializing the algorithm and set the sample size of H, the subset over which the determinant is minimized, equal to 40. Report the raw MCD estimates of location and scatter. Define a vector ind_out_MCD of row indexes identifying the samples (within the Barolo subpopulation) that are outliers according to the MCD call and report it.
+
+**Synthetic description of assumptions, methods, and algorithms **    
+
+**Results and brief discussion**    
+
+```{r,echo=FALSE}
+df_3 <- readRDS("/Users/noedebrois/Desktop/Politecnico/Non Parametric Statistics/LECTURES/PREVIOUS EXAMS-20231223/Data/2023-06-19/df_3.Rds")
+
+# Extract the relevant columns (Milk pH, Casein Micelle Size, κ-casein) from the dataset
+# X_mcd <- df_3[, 3:6]
+X_mcd <- df_3[df_3$type=="Barolo",3:6] # "Focusing on the Barolo wine samples"
+
+# Get the number of rows in the dataset
+N <- nrow(X_mcd)
+
+# Set a seed for reproducibility
+set.seed(2022)
+
+# Fit the Minimum Covariance Determinant (MCD) estimator
+fit_MCD <- covMcd(x = X_mcd, alpha = 40 / N, nsamp = 1000) # N - 41 = 341... donc alpha = 341 / N = (N-41) / N
+
+# Report the raw MCD estimate of location
+fit_MCD$raw.center
+
+# Report the raw MCD estimate of scatter (covariance matrix)
+fit_MCD$raw.cov
+
+# Identify outliers using the MCD estimator and create a vector of row indexes
+# Attention il existe plusieurs critères pour identifier les outliers ! (cf Ex 3 11/07/2022)
+# Ici : on veut décrire comme outliers ceux qui ne sont pas sélectionnés par les "best".
+# ICI : "ceux qui ne sont pas les best" : pas les "vrais" outliers.
+# FAIRE L'AUTRE SI PAS CLAIR !
+ind_out_MCD <- setdiff(1:N, fit_MCD$best)
+
+# Report the vector of row indexes identifying the outliers
+ind_out_MCD
+```
+```{r}
+# Report the raw MCD estimate of location
+fit_MCD$raw.center
+```
+
+
+```{r}
+# Report the raw MCD estimate of scatter (covariance matrix)
+fit_MCD$raw.cov
+```
+
+## Question 1.2
+
+# 2. Simon Le Vanten knows that Italians may be a little bit sneaky when it comes to wines, and he believes some Barolo wines may have been purposely labeled as Barbera. Employing the (reweighted) MCD estimates obtained in the previous exercise, check if some Barbera samples have been wrongly labeled by computing robust squared Mahalanobis distances using chi 24,0.975 as cut-off value, with chi 2p,alpha denoting the alpha-quantile of a chi 2 distribution with p degrees of freedom
+
+**Synthetic description of assumptions, methods, and algorithms **    
+abc     
+
+**Results and brief discussion**    
+123
+```{r,echo=FALSE}
+X_barbera <- df_3[df_3$type == "Barbera", 3:6] 
+ind_wrongly_labeled_obs <- 
+  which(mahalanobis(
+    x = X_barbera,
+    center = fit_MCD$center,
+    cov = fit_MCD$cov
+  ) <= qchisq(p = .975, df = 4)
+)
+length(ind_wrongly_labeled_obs)
+# 3 obs may have been wrongly labeled!
+```
+
+
+## Question 1.3
+
+# 3. Since the type variable could be unreliable, Simon Le Vanten asks you to build a robust linear model for the entire dataset to regress p_h on the remaining variables (excluding type) using a Least Trimmed Squares (LTS) approach, setting the hyperparameter alpha = 0.75. Report the summary table including a comment on statistical significance. Provide the outlier map for the robust linear model: are bad leverage points present in the dataset according to the diagnostic plot?
+
+**Synthetic description of assumptions, methods, and algorithms **    
+abc     
+
+**Results and brief discussion**    
+123
+```{r,echo=FALSE}
+fit_lts <- ltsReg(p_h ~ .-type, alpha = 0.75, data = df_3)
+summary(fit_lts)
+```
+```{r}
+plot(fit_lts, which="rdiag")
+# One single leverage point: unit 89
+```
+
+

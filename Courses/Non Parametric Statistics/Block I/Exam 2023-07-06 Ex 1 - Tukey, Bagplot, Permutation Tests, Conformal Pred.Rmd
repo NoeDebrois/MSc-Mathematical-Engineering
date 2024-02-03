@@ -1,0 +1,239 @@
+---
+title: "Nonparametric Statistics"
+author: "Noé Debrois and ID number"
+date: "2024-01-12"
+output:
+  pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE)
+knitr::opts_chunk$set(warning = FALSE)
+knitr::opts_chunk$set(message = FALSE)
+```
+
+```{r,echo=FALSE,results='hide',warning=FALSE,message=FALSE}
+#Library imports 
+library(aplpack)
+library(boot)
+library(broom)
+library(bslib)
+library(colorspace)
+library(conformalInference)
+library(conformalInference.fd)
+library(conformalInference.multi)
+library(corrplot)
+library(cowplot)
+library(datasets)
+library(dbscan)
+library(DepthProc)
+library(desc)
+library(DescTools)
+library(exactRankTests)
+library(fastmap)
+library(fda)
+library(fds)
+library(gam)
+library(gdtools)
+library(ggnewscale)
+library(ggplot2)
+library(ggsignif)
+library(ggtext)
+library(graphics)
+library(grDevices)
+library(grid)
+library(gridExtra)
+library(lme4)
+library(lmPerm)
+library(locfit)
+library(Matrix)
+library(MatrixModels)
+library(mgcv)
+library(nlme)
+library(np)
+library(npreg)
+library(pbapply)
+library(permute)
+library(polynom)
+library(pyinit)
+library(quantreg)
+library(rainbow)
+library(Rcpp)
+library(resample)
+library(roahd)
+library(RobStatTM)
+library(robustbase)
+library(rpart)
+library(rrcov)
+library(scales)
+library(sm)
+library(splines)
+library(stats)
+library(survival)
+library(survminer)
+
+library(base64enc)
+library(bit)
+library(brio)
+library(cachem)
+library(commonmark)
+library(cpp11)
+library(doParallel)
+library(parallel)
+library(parallelly)
+
+```
+
+
+# Exercise 1
+
+# An Irish farmer, Andrew O’Cappor, owns N = 370 cows and he aims at becoming the best quality milk-maker in the whole Ireland. Knowing that he must rely on the most sophisticated analytical techniques to achieve his goal he collects N = 370 milk samples, one for each cow, measuring two milk quality traits, namely chi-casein (grams per liter) and Milk pH. The resulting samples are contained in the df_1.Rds file. His first aim is to identify whether some cows in the herd produce anomalous milk, he therefore asks you to:
+
+## Question 1.1
+
+# 1. Provide the sample Mahalanobis median of the milk samples and superimpose it to the scatterplot of chi-casein vs Native pH
+
+**Synthetic description of assumptions, methods, and algorithms **    
+
+**Results and brief discussion**    
+
+```{r,echo=FALSE}
+df_1 <- readRDS("/Users/noedebrois/Desktop/Politecnico/Non Parametric Statistics/LECTURES/PREVIOUS EXAMS-20231223/Data/2023-07-06/df_1.Rds")
+```
+
+```{r}
+N <- nrow(df_1)
+p <- ncol(df_1)
+(maha_median <- depthMedian(df_1,depth_params = list(method='Mahalanobis')))
+```
+```{r}
+plot(df_1, cex = .5)
+points(x = maha_median[1],
+       maha_median[2],
+       col = "red",
+       cex = 2,
+       pch = "x" )
+```
+
+## Question 1.2
+
+# 2. Provide a bagplot of the collected variables, determining a vector of row indexes identifying the milk samples that are outliers according to the procedure.
+
+**Synthetic description of assumptions, methods, and algorithms **    
+abc     
+
+**Results and brief discussion**    
+123
+```{r}
+bagplot_milk <- aplpack::bagplot(df_1)
+```
+```{r}
+ind_out <- which(apply(df_1, 1, function(x)
+all(x %in% bagplot_milk$pxy.outlier)))
+ind_out
+```
+
+## Question 1.3
+
+# 3. Test whether the 370 milk samples comply with the gold standard in terms of milk quality, for which chi-casein must be equal to 6 grams per liter and Milk pH to 7. Perform a permutation test using as test statistic the squared Euclidean distance between the sample Mahalanobis median and the gold standard. Provide the histogram of the permuted distribution of the test statistic and the p-value, commenting the results.
+
+**Synthetic description of assumptions, methods, and algorithms **    
+abc     
+
+**Results and brief discussion**    
+123
+```{r,echo=FALSE}
+standard_cow <- c(6,7)
+
+T_20 <- norm(maha_median-standard_cow,"2")^2
+
+B <- 1000
+T2 <- numeric(B)
+set.seed(2022)
+pb=progress::progress_bar$new(total=B, format = " Processing [:bar] :percent eta: :eta")
+
+for(perm in 1:B) {
+  # Permuted dataset
+  signs.perm <- rbinom(N, 1, 0.5) * 2 - 1
+  df_perm <- sweep(sweep(df_1,2,standard_cow) * matrix(signs.perm,nrow=N,ncol=p,byrow=FALSE),2,-standard_cow)
+  x.maha_perm <- depthMedian(df_perm,depth_params = list(method='Mahalanobis'))
+  T2[perm] <- norm(x.maha_perm - standard_cow, type = "2")^2
+  pb$tick()
+}
+
+hist(T2,xlim=range(c(T2,T_20)))
+abline(v=T_20,col=3,lwd=4)
+```
+```{r}
+# p-value
+p_val <- sum(T2>=T_20)/B
+p_val
+```
+
+## Question 1.4
+
+# 4. Provide a Full Conformal 1 - alpha = 95% prediction region for the chi-casein and Milk pH of a new milk sample, using the Euclidean distance between the new data point and the sample Mahalanobis median of the augmented data set as non-conformity measure, providing a plot of it.
+
+**Synthetic description of assumptions, methods, and algorithms **    
+abc     
+
+**Results and brief discussion**    
+123
+```{r,echo=FALSE}
+data_predict = df_1
+n_grid = 20
+grid_factor = 0.25
+alpha = .05
+n = nrow(data_predict)
+
+range_x = range(data_predict[, 1])[2] - range(data_predict[, 1])[1]
+range_y = range(data_predict[, 2])[2] - range(data_predict[, 2])[1]
+
+test_grid_x = seq(min(data_predict[, 1]) - grid_factor * range_x,
+                  max(data_predict[, 1]) + grid_factor * range_x,
+                  length.out = n_grid
+                  )
+test_grid_y = seq(min(data_predict[, 2]) - grid_factor * range_y,
+                  max(data_predict[, 2]) + grid_factor * range_y,
+                  length.out = n_grid
+                  )
+
+xy_surface = expand.grid(test_grid_x, test_grid_y)
+colnames(xy_surface) = colnames(data_predict)
+
+wrapper_multi_conf = function(test_point) {
+  newdata = rbind(test_point, data_predict)
+  newmedian = depthMedian(newdata, depth_params = list(method = 'Mahalanobis'))
+  
+norm_tmp <- sweep(newdata,
+                  MARGIN = 2,
+                  STATS = newmedian,
+                  FUN = "-")
+depth_surface_vec <- apply(norm_tmp, 1, norm, type = "2")
+sum(depth_surface_vec[-1] >= depth_surface_vec[1]) / (n + 1)
+}
+
+
+pval_surf = pbapply::pbapply(xy_surface, 1, wrapper_multi_conf)
+data_plot = cbind(pval_surf, xy_surface)
+
+p_set = xy_surface[pval_surf > alpha, ]
+poly_points = p_set[chull(p_set), ]
+
+ggplot() +
+geom_raster(data = data_plot, aes(kappa_casein, Native_pH, fill = pval_surf)) + geom_point(data = data.frame(data_predict), aes(kappa_casein, Native_pH)) + geom_polygon(
+data = poly_points, aes(kappa_casein, Native_pH), color = 'red',
+size = 1,
+alpha = 0.01
+)
+```
+
+```{r,echo=FALSE}
+
+```
+
+
+```{r,echo=FALSE}
+
+```
+

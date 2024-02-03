@@ -1,0 +1,176 @@
+---
+title: "Nonparametric Statistics"
+author: "Noé Debrois, Person Code 10949145, ID 242751"
+date: "2024-01-12"
+output:
+  pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE)
+knitr::opts_chunk$set(warning = FALSE)
+knitr::opts_chunk$set(message = FALSE)
+```
+
+```{r,echo=FALSE,results='hide',warning=FALSE,message=FALSE}
+#Library imports 
+library(aplpack)
+library(boot)
+library(broom)
+library(bslib)
+library(colorspace)
+library(conformalInference)
+library(conformalInference.fd)
+library(conformalInference.multi)
+library(corrplot)
+library(cowplot)
+library(datasets)
+library(dbscan)
+library(DepthProc)
+library(desc)
+library(DescTools)
+library(exactRankTests)
+library(fastmap)
+library(fda)
+library(fds)
+library(gam)
+library(gdtools)
+library(ggnewscale)
+library(ggplot2)
+library(ggsignif)
+library(ggtext)
+library(graphics)
+library(grDevices)
+library(grid)
+library(gridExtra)
+library(lme4)
+library(lmPerm)
+library(locfit)
+library(Matrix)
+library(MatrixModels)
+library(mgcv)
+library(nlme)
+library(np)
+library(npreg)
+library(pbapply)
+library(permute)
+library(polynom)
+library(pyinit)
+library(quantreg)
+library(rainbow)
+library(Rcpp)
+library(resample)
+library(roahd)
+library(RobStatTM)
+library(robustbase)
+library(rpart)
+library(rrcov)
+library(scales)
+library(sm)
+library(splines)
+library(stats)
+library(survival)
+library(survminer)
+
+library(base64enc)
+library(bit)
+library(brio)
+library(cachem)
+library(commonmark)
+library(cpp11)
+library(doParallel)
+library(parallel)
+library(parallelly)
+
+```
+
+
+# Exercise 2
+
+## Question 2.1
+**Synthetic description of assumptions, methods, and algorithms **    
+We apply a raw polynomial fit here twice.
+On the first, we see thanks to the pvalues that all the coefficient are *** significant. 
+
+**Results and brief discussion**    
+
+```{r,echo=FALSE}
+df2 <- read.csv("/Users/noedebrois/Desktop/Politecnico/Non Parametric Statistics/Exam/NPS_January24/df2.csv", header=TRUE, sep=",")
+```
+
+```{r}
+m_quad_1=lm(df2$CO2_emissions ~ I(df2$GDP_per_capita^2))
+summary(m_quad_1)
+```
+```{r}
+gdp.grid=seq(range(df2$GDP_per_capita)[1],range(df2$GDP_per_capita)[2],by=1410)
+preds=predict(m_quad_1,list(gdp=gdp.grid),se=T)
+se.bands=cbind(preds$fit +2* preds$se.fit ,preds$fit -2* preds$se.fit)
+
+plot(df2$GDP_per_capita, df2$CO2_emissions, xlim=range(gdp.grid) ,cex =.5, col =" darkgrey ", main='Quadratic Fit')
+lines(gdp.grid, preds$fit,lwd =2, col =" blue") 
+matlines (gdp.grid ,se.bands ,lwd =1, col =" blue",lty =3)
+```
+```{r}
+gdp.grid=seq(range(df2$GDP_per_capita)[1],range(df2$GDP_per_capita)[2],by=1410)
+preds=predict(m_quad_1,list(gdp=gdp.grid),se=T)
+se.bands=cbind(preds$fit +2* preds$se.fit ,preds$fit -2* preds$se.fit)
+
+plot(df2$GDP_per_capita, df2$CO2_emissions, xlim=range(gdp.grid) ,cex =.5, col =" darkgrey ", main='Quadratic Fit')
+lines(gdp.grid, preds$fit,lwd =2, col =" blue") 
+matlines (gdp.grid ,se.bands ,lwd =1, col =" blue",lty =3)
+```
+
+## Question 2.2
+**Synthetic description of assumptions, methods, and algorithms **    
+Assumptions : X1,...,Xn~p
+We want to predict the location of Xn+1 following the same distribution p. In particular, we want to build a confidence region for this new point.
+We choose a Non-conformity measure. Then, from this non conformity measure, we can now rank the observations of an augmented vector (x1,...,xn,xtest) and so determine the p-value corresponding to xtest : pval=R_{n+1}/(n+1).
+From that we can deduce prediction bands or prediction region with confidence 1-alpha by taking C(X1,...,Xn)={xn+1 in R^p st r_{n+1}<=ceil((1-alpha)*(n+1))}
+
+**Results and brief discussion**    
+123
+```{r,echo=FALSE}
+df2_1 = df2[, 4:5]
+m_quad1 = lm(df2_1$CO2_emissions ~ I(df2_1$GDP_per_capita))
+summary(m_quad1)
+```
+
+
+## Question 2.3
+**Synthetic description of assumptions, methods, and algorithms **    
+By fitting the GAM and looking at the p-values, we see that only the intercept and the second coefficient from the bs are statistically significant (others have higher than 0.05 pvalues).
+The coefficients represent the estimated effects of the basis splines for the 
+variable GDP. The asterisks in the p-values indicate statistical significance.
+The pvalues < 0.05 suggest that the related coefficients contribute significantly to the model.
+The others suggest that these terms may not be contributing significantly to the model.
+
+**Results and brief discussion**    
+123
+```{r,echo=FALSE}
+df = df2
+df[,6] = log(df[,6]/(1-df[,6]))
+
+fit_gam <- gam(Gini ~ bs(GDP_per_capita, degree = 2, knots = median(3000)), 
+               data = df)
+summary(fit_gam) 
+```
+
+## Question 2.4
+**Synthetic description of assumptions, methods, and algorithms **    
+Bootstrap Assumptions :
+S1 = (X1,...,Xn)~ iid p
+The primary task of bootstrapping is estimating from a random sample S1, the distribution of a statistic, it is to say an estimator theta_hat of an unknown parameter theta.
+The principle is to sample a new vector having the same size as S1 from S1 itself with replacement ! From this idea, we can provide more information about the quality of the estimator.  
+
+**Results and brief discussion**    
+123
+```{r,echo=FALSE}
+
+```
+
+```{r,echo=FALSE}
+
+```
+
+

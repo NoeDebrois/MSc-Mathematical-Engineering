@@ -1,0 +1,137 @@
+---
+title: "Nonparametric Statistics"
+author: "Simon, Trottier and 10988912"
+date: "2024-01-12"
+output:
+  pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE)
+knitr::opts_chunk$set(warning = FALSE)
+knitr::opts_chunk$set(message = FALSE)
+```
+
+```{r,results='hide',message=FALSE}
+#Library imports 
+library(aplpack)
+library(boot)
+library(broom)
+library(bslib)
+library(colorspace)
+library(conformalInference)
+library(conformalInference.fd)
+library(conformalInference.multi)
+library(corrplot)
+library(cowplot)
+library(datasets)
+library(dbscan)
+library(DepthProc)
+library(desc)
+library(DescTools)
+library(exactRankTests)
+library(fastmap)
+library(fda)
+library(fds)
+library(gam)
+library(gdtools)
+library(ggnewscale)
+library(ggplot2)
+library(ggsignif)
+library(ggtext)
+library(graphics)
+library(grDevices)
+library(grid)
+library(gridExtra)
+library(lme4)
+library(lmPerm)
+library(locfit)
+library(Matrix)
+library(MatrixModels)
+library(mgcv)
+library(nlme)
+library(np)
+library(npreg)
+library(pbapply)
+library(permute)
+library(polynom)
+library(pyinit)
+library(quantreg)
+library(rainbow)
+library(Rcpp)
+library(resample)
+library(roahd)
+library(RobStatTM)
+library(robustbase)
+library(rpart)
+library(rrcov)
+library(scales)
+library(sm)
+library(splines)
+library(stats)
+library(survival)
+library(survminer)
+
+library(base64enc)
+library(bit)
+library(brio)
+library(cachem)
+library(commonmark)
+library(cpp11)
+library(doParallel)
+library(parallel)
+library(parallelly)
+
+```
+
+
+```{r}
+```
+
+# Exercise 3
+
+## Question 3.1
+**Synthetic description of assumptions, methods, and algorithms **    The principle behind functinal boxplot is the following one : 
+
+Compute data depths, rank data and consider the 50% central
+region, inflate it by a factor F >1, obtain the fences given by the envelope of functions inside the inflated regions and flag the observations crossing the fence or outside as amplitude outliers.
+
+
+**Results and brief discussion**    
+
+```{r}
+```
+
+
+## Question 3.2
+**Synthetic description of assumptions, methods, and algorithms **    The $\alpha$=0.1-trimmed mean is correspond to the mean we obtain when we remove the 10% Highest and 10% Lowest values in our data. This allows to be more robust since we can have up to 10% of totally incoherent values (+inf for instance).
+
+**Results and brief discussion**    
+
+
+```{r}
+
+```
+
+
+## Question 3.3
+**Synthetic description of assumptions, methods, and algorithms **    
+The test hypothesis are 
+H0 : High and low incomes distributions are the same 
+H1 : High and low incomes distributions are different
+
+We have first an initial value of the test T0 corresponding to the L2 distance between the functionals $\alpha$-trimmed means.
+
+We assume first group as m members and second group as n.
+The permutation test will, at each turn, assign randomly (without replacement) among the n+m members, m forming the new first group and the n others one will form a new second group. For these two groups, we then determine the value of the test T2_i.
+
+the p-value corresponds to the numbers of test belonging to T2 that are more extreme that T0.
+
+**Results and brief discussion**    
+
+```{r}
+
+```
+
+
+

@@ -1,0 +1,199 @@
+---
+title: "Nonparametric Statistics"
+author: "Simon, Trottier and 10988912"
+date: "2024-01-12"
+output:
+  pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE)
+knitr::opts_chunk$set(warning = FALSE)
+knitr::opts_chunk$set(message = FALSE)
+```
+
+```{r,results='hide',message=FALSE}
+#Library imports 
+library(aplpack)
+library(boot)
+library(broom)
+library(bslib)
+library(colorspace)
+library(conformalInference)
+library(conformalInference.fd)
+library(conformalInference.multi)
+library(corrplot)
+library(cowplot)
+library(datasets)
+library(dbscan)
+library(DepthProc)
+library(desc)
+library(DescTools)
+library(exactRankTests)
+library(fastmap)
+library(fda)
+library(fds)
+library(gam)
+library(gdtools)
+library(ggnewscale)
+library(ggplot2)
+library(ggsignif)
+library(ggtext)
+library(graphics)
+library(grDevices)
+library(grid)
+library(gridExtra)
+library(lme4)
+library(lmPerm)
+library(locfit)
+library(Matrix)
+library(MatrixModels)
+library(mgcv)
+library(nlme)
+library(np)
+library(npreg)
+library(pbapply)
+library(permute)
+library(polynom)
+library(pyinit)
+library(quantreg)
+library(rainbow)
+library(Rcpp)
+library(resample)
+library(roahd)
+library(RobStatTM)
+library(robustbase)
+library(rpart)
+library(rrcov)
+library(scales)
+library(sm)
+library(splines)
+library(stats)
+library(survival)
+library(survminer)
+
+library(base64enc)
+library(bit)
+library(brio)
+library(cachem)
+library(commonmark)
+library(cpp11)
+library(doParallel)
+library(parallel)
+library(parallelly)
+
+```
+
+```{r}
+df_1=read.csv("NPS_January24/df1.csv")
+N<-nrow(df_1)
+p<-ncol(df_1)
+df_1[,6]<-logit(df_1[,6])
+df_bis <- df_1[,4:6]
+```
+
+
+# Exercise 1
+
+## Question 1.1
+**Synthetic description of assumptions, methods, and algorithms **    
+
+The Tukey depth, also call the Half-spaced depth in reason of the computational method behind it allows to assigns a score of centrality for each point in a distribution. The more central the point is, higher is its Tukey depth. It is a robust way of computing depth. 
+
+**Results and brief discussion**    
+
+```{r}
+d<-numeric(N)
+for (i in 1:N){
+  d[i]<-depthTukey(as.matrix(df_bis[i,]),as.matrix(df_bis))
+}
+```
+
+```{r}
+i1=1
+m1=0
+for (i in 1:N){
+  if (d[i]>m1){
+    m1<-d[i]
+    i1<-i
+  }
+}
+i2=1
+m2=0
+for (i in 1:N){
+  if (d[i]>m2 & i!=i1){
+    m2<-d[i]
+    i2<-i
+  }
+}
+i3=1
+m3=0
+for (i in 1:N){
+  if (d[i]>m3 & i!=i1 & i!=i2){
+    m3<-d[i]
+    i3<-i
+  }
+}
+c(df_1[i1,1],df_1[i2,1],df_1[i3,1])
+```
+So here are the three countries with the highest depth. The median correspond to the first one which is the deepest ("CRI").
+
+## Question 1.2
+**Synthetic description of assumptions, methods, and algorithms **    
+
+The bagplot matrix is a graphical tool which allows to detect outliers by considering 2 variables at the time ans showing the outlier for each pair of variables.
+
+**Results and brief discussion**    
+
+
+```{r}
+bagplot_matrix <-aplpack::bagplot.pairs(df_bis)
+```
+```{r}
+bagplot_12 <- compute.bagplot(df_bis[, 1], df_bis[, 2])
+
+ind_bag<-
+which(apply(df_bis[, 1:2], 1, function(x)
+    all(x %in% bagplot_12$pxy.bag)))
+
+ind_out_12 <-
+which(apply(df_bis[, 1:2], 1, function(x)
+    all(x %in% bagplot_12$pxy.outlier)))
+
+df_1[ind_bag,1]
+```
+Here are the countries that are inside the bag.
+
+```{r}
+df_1[ind_out_12,1]
+```
+Here are the countries that are outliers.
+
+```{r}
+df_1<-df_1[-ind_out_12,]
+df_bis <- df_bis[-ind_out_12,]
+```
+
+## Question 1.3
+**Synthetic description of assumptions, methods, and algorithms **    
+The Permutational Manova test allows to compare multivariate distribution and to test whether or not we can assume that they are identically distributed based on their mean.    
+
+**Results and brief discussion**    
+
+
+
+## Question 1.4
+**Synthetic description of assumptions, methods, and algorithms **    
+The Mann-Whitney U test is the following:
+H0 : CO2 emissions of Middle income and High income are the same
+H1 : CO2 emissions of Middle income and High income are different
+
+To perform this test, we need could have use the wilcox.test function and setting the paired argument as false.
+
+
+**Results and brief discussion**    
+123
+```{r}
+
+```
+

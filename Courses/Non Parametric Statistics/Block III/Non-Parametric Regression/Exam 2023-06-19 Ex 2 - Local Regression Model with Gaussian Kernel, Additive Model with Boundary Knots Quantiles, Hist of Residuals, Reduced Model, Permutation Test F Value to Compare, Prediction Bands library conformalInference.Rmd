@@ -1,0 +1,267 @@
+---
+title: "Nonparametric Statistics"
+author: "Noé Debrois and ID number"
+date: "2024-01-12"
+output:
+  pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE)
+knitr::opts_chunk$set(warning = FALSE)
+knitr::opts_chunk$set(message = FALSE)
+```
+
+```{r,echo=FALSE,results='hide',warning=FALSE,message=FALSE}
+#Library imports 
+library(aplpack)
+library(boot)
+library(broom)
+library(bslib)
+library(colorspace)
+library(conformalInference)
+library(conformalInference.fd)
+library(conformalInference.multi)
+library(corrplot)
+library(cowplot)
+library(datasets)
+library(dbscan)
+library(DepthProc)
+library(desc)
+library(DescTools)
+library(exactRankTests)
+library(fastmap)
+library(fda)
+library(fds)
+library(gam)
+library(gdtools)
+library(ggnewscale)
+library(ggplot2)
+library(ggsignif)
+library(ggtext)
+library(graphics)
+library(grDevices)
+library(grid)
+library(gridExtra)
+library(lme4)
+library(lmPerm)
+library(locfit)
+library(Matrix)
+library(MatrixModels)
+library(mgcv)
+library(nlme)
+library(np)
+library(npreg)
+library(pbapply)
+library(permute)
+library(polynom)
+library(pyinit)
+library(quantreg)
+library(rainbow)
+library(Rcpp)
+library(resample)
+library(roahd)
+library(RobStatTM)
+library(robustbase)
+library(rpart)
+library(rrcov)
+library(scales)
+library(sm)
+library(splines)
+library(stats)
+library(survival)
+library(survminer)
+
+library(base64enc)
+library(bit)
+library(brio)
+library(cachem)
+library(commonmark)
+library(cpp11)
+library(doParallel)
+library(parallel)
+library(parallelly)
+
+```
+
+
+# Exercise 1
+
+# Simon Le Vanten is now interested in building a nonparametric model to predict the Alcohol by Volume of his wines as a function of color intensity (measured in absorbance units) and concentration of potassium (milligrams per liter), contained in the df_2.Rds file. He therefore asks you to:
+
+## Question 1.1
+
+# 1. Fit a local linear regression model with a Gaussian kernel and bandwidth equal to 1 absorbance unit to predict the Alcohol by Volume as a function of color intensity. Provide a plot of the regression curve.
+
+**Synthetic description of assumptions, methods, and algorithms **    
+
+**Results and brief discussion**    
+
+```{r,echo=FALSE}
+df_2 <- readRDS("/Users/noedebrois/Desktop/Politecnico/Non Parametric Statistics/LECTURES/PREVIOUS EXAMS-20231223/Data/2023-06-19/df_2.Rds")
+
+m_loc = npreg(alcohol ~ color_intensity,
+              ckertype = 'gaussian', # kernel type
+              bws = 1, # bandwidth 
+              residuals=TRUE, # TO GET THE RESIDUALS (later useful for the bootstrap !)
+              data = df_2)
+
+measures=data.frame(color_intensity = with(df_2, seq(range(color_intensity)[1], range(color_intensity)[2], by=.1)))
+
+preds=predict(m_loc, newdata = measures, se = T)
+se.bands=cbind(preds$fit + 2 * preds$se.fit, preds$fit - 2 * preds$se.fit)
+
+# Plot :
+with(df_2, 
+     plot(color_intensity,
+          alcohol,
+          xlim = range(df_2$color_intensity),
+          cex = .5,
+          col = " darkgrey ",
+          main = 'Local Averaging - bws1 - Gaussian kernel'
+          )
+     )
+lines(measures$color_intensity, preds$fit, lwd = 2, col = "blue")
+matlines(measures$color_intensity, se.bands, lwd = 1, col = "blue", lty =3)
+```
+
+## Question 1.2
+
+# 2. Build an additive model for regressing Alcohol by Volume on color intensity and concentration of potassium using natural cubic splines with one knot at the median and boundary knots at the 5th and 95th percentiles as univariate smoothers for the two predictors. Report the summary table including a comment on statistical significance. Provide an histogram of the residuals of the model.
+
+**Synthetic description of assumptions, methods, and algorithms **    
+abc     
+
+**Results and brief discussion**    
+123
+```{r,echo=FALSE}
+# the medians :
+knots_col_intensity <- median(df_2$color_intensity) 
+knots_potassium <- median(df_2$potassium)
+# the 5th and 95th quantiles :
+boundary_knots_col_intensity <- quantile(df_2$color_intensity,probs = c(.05,.95)) 
+boundary_knots_potassium <- quantile(df_2$potassium,probs = c(.05,.95))
+
+model_gam_ns <- lm(alcohol ~ ns(color_intensity, knots = knots_col_intensity, Boundary.knots = boundary_knots_col_intensity) + ns(potassium, knots = knots_potassium, Boundary.knots = boundary_knots_potassium), data = df_2)
+
+# summary(model_gam_ns)
+knitr::kable(broom::tidy(summary(model_gam_ns)),digits = 4)
+```
+```{r,echo=FALSE}
+hist(model_gam_ns$residuals)
+```
+
+
+## Question 1.3
+
+# 3. Build a reduced version of the previous model considering only the contribution of color intensity for explaining Alcohol by Volume. Employ a permutational test to validate which model should be preferred and report the resulting p-value. Consider the F value as test statistic and use the Friedman & Lane permutation scheme.
+
+**Synthetic description of assumptions, methods, and algorithms **    
+abc     
+
+**Results and brief discussion**    
+123
+```{r,echo=FALSE}
+model_gam_ns_reduced <- lm(alcohol ~ ns(color_intensity, knots = knots_col_intensity, Boundary.knots = boundary_knots_col_intensity), data = df_2)
+
+fitted.obs <- model_gam_ns_reduced$fitted.values
+res.obs <- model_gam_ns_reduced$residuals
+
+T_0 <- anova(model_gam_ns_reduced,model_gam_ns)[2,5]
+
+N <- nrow(df_2)
+# Estimating the permutational distribution under H0
+B <- 1000
+T2 <- numeric(B)
+set.seed(2022)
+
+for (perm in 1:B) {
+res_reduced_perm <- res.obs[sample(1:N)] 
+y_perm <- fitted.obs + res_reduced_perm
+
+df_2_perm <- df_2 
+df_2_perm$alcohol <- y_perm
+
+model_gam_ns_perm <-lm(alcohol ~ ns(color_intensity, knots = knots_col_intensity, Boundary.knots = boundary_knots_col_intensity) + ns(potassium, knots = knots_potassium, Boundary.knots = boundary_knots_potassium), data = df_2_perm)
+
+model_gam_ns_reduced_perm <- lm(alcohol ~ ns(color_intensity, knots = knots_col_intensity, Boundary.knots = boundary_knots_col_intensity), data = df_2_perm)
+
+T2[perm] <- anova(model_gam_ns_reduced_perm,model_gam_ns_perm)[2,5] 
+}
+
+hist(T2, xlim = range(c(T2, T_0)))
+abline(v = T_0, col = 3, lwd = 4)
+```
+
+
+```{r,echo=FALSE}
+p_val <- sum(T2 >= T_0) / B 
+p_val
+# Cannot reject H0: reduced model is better
+```
+
+## Question 1.4
+
+# 4. Compute the prediction bands for the regression model selected according to the test performed in the previous exercise, using a full conformal approach and setting $\alpha = 0.1$ as the miscoverage level
+
+**Synthetic description of assumptions, methods, and algorithms **    
+abc     
+
+**Results and brief discussion**    
+123
+```{r,echo=FALSE}
+color_intensity_grid = seq(range(df_2$color_intensity)[1], range(df_2$color_intensity)[2], length.out = 100)
+
+preds = predict(model_gam_ns_reduced, list(color_intensity = color_intensity_grid), se = T)
+
+with( df_2,
+      plot(color_intensity,
+           alcohol,
+           xlim = range(color_intensity_grid), 
+           cex = .5,
+           col = " darkgrey "
+           )
+      )
+
+knots_pred = predict(model_gam_ns_reduced, list(color_intensity = knots_col_intensity))
+points(knots_col_intensity, knots_pred, 
+       col = 'blue',
+       pch = 19)
+
+boundary_pred <- predict(model_gam_ns_reduced, list(color_intensity = boundary_knots_col_intensity))
+points(boundary_knots_col_intensity, boundary_pred, col = 'red', pch = 19)
+
+abline(v = knots_col_intensity, lty = 3, col = "blue") 
+abline(v = boundary_knots_col_intensity, lty = 3, col = "red")
+
+lm_train = lm.funs(intercept = T)$train.fun
+lm_predict = lm.funs(intercept = T)$predict.fun
+
+design_matrix = ns(df_2$color_intensity, knots = knots_col_intensity, Boundary.knots = boundary_knots_col_intensity)
+pred_grid = matrix( ns(color_intensity_grid, knots = knots_col_intensity, Boundary.knots = boundary_knots_col_intensity), nrow = length(color_intensity_grid))
+
+c_preds = conformal.pred(x = design_matrix,
+                         y = df_2$alcohol, pred_grid,
+                         alpha = 0.1,
+                         verbose = F,
+                         train.fun = lm_train,
+                         predict.fun = lm_predict,
+                         num.grid.pts = 200
+                         )
+
+lines(color_intensity_grid, 
+      c_preds$pred,
+      lwd = 2,
+      col = "red",
+      lty = 3
+      ) 
+
+matlines(color_intensity_grid,
+         cbind(c_preds$up, c_preds$lo),
+         lwd = 1,
+         col = " blue",
+         lty = 3
+         )
+```
+
+
